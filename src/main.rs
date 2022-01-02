@@ -13,6 +13,17 @@ impl Dollar {
     }
 }
 
+#[derive(Debug, PartialEq)]
+struct Franc {
+    amount: i64,
+}
+
+impl Franc {
+    fn times(&mut self, multiplier: i64) -> Franc {
+        Franc { amount: self.amount * multiplier }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -26,5 +37,11 @@ mod tests {
     fn test_equality() {
         assert_eq!(Dollar { amount: 5}, Dollar { amount: 5});
         assert_ne!(Dollar { amount: 5}, Dollar { amount: 6});
+    }
+    #[test]
+    fn test_franc_multiplication() {
+        let mut five = Franc { amount: 5 };
+        assert_eq!(Franc { amount: 10}, five.times(2));
+        assert_eq!(Franc { amount: 15}, five.times(3));
     }
 }
