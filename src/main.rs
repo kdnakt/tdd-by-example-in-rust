@@ -19,10 +19,8 @@ mod tests {
     #[test]
     fn test_multiplication() {
         let mut five = Dollar { amount: 5 };
-        let product = five.times(2);
-        assert_eq!(10, product.amount);
-        let product = five.times(3);
-        assert_eq!(15, product.amount);
+        assert_eq!(Dollar { amount: 10}, five.times(2));
+        assert_eq!(Dollar { amount: 15}, five.times(3));
     }
     #[test]
     fn test_equality() {
