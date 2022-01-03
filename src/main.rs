@@ -1,26 +1,27 @@
+use crate::{
+    Money::*,
+};
+
 fn main() {
     println!("Hello, world!");
 }
 
 #[derive(Debug, PartialEq)]
-struct Dollar {
-    amount: i64,
+enum Money {
+    Dollar {
+        amount: i64,
+    },
+    Franc {
+        amount: i64,
+    },
 }
 
-impl Dollar {
-    fn times(&mut self, multiplier: i64) -> Dollar {
-        Dollar { amount: self.amount * multiplier }
-    }
-}
-
-#[derive(Debug, PartialEq)]
-struct Franc {
-    amount: i64,
-}
-
-impl Franc {
-    fn times(&mut self, multiplier: i64) -> Franc {
-        Franc { amount: self.amount * multiplier }
+impl Money {
+    fn times(&self, multiplier: i64) -> Money {
+        match self {
+            Dollar{amount} => Dollar { amount: amount * multiplier },
+            Franc{amount} => Franc { amount: amount * multiplier },
+        }
     }
 }
 
@@ -29,7 +30,7 @@ mod tests {
     use super::*;
     #[test]
     fn test_multiplication() {
-        let mut five = Dollar { amount: 5 };
+        let five = Dollar { amount: 5 };
         assert_eq!(Dollar { amount: 10}, five.times(2));
         assert_eq!(Dollar { amount: 15}, five.times(3));
     }
@@ -40,7 +41,7 @@ mod tests {
     }
     #[test]
     fn test_franc_multiplication() {
-        let mut five = Franc { amount: 5 };
+        let five = Franc { amount: 5 };
         assert_eq!(Franc { amount: 10}, five.times(2));
         assert_eq!(Franc { amount: 15}, five.times(3));
     }
