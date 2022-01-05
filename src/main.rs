@@ -38,6 +38,8 @@ mod tests {
     fn test_equality() {
         assert_eq!(Dollar { amount: 5}, Dollar { amount: 5});
         assert_ne!(Dollar { amount: 5}, Dollar { amount: 6});
+        assert_eq!(Franc { amount: 5}, Franc { amount: 5});
+        assert_ne!(Franc { amount: 5}, Franc { amount: 6});
     }
     #[test]
     fn test_franc_multiplication() {
