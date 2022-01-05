@@ -25,27 +25,36 @@ impl Money {
     }
 }
 
+fn dollar(amount: i64) -> Money {
+    Dollar{amount}
+}
+
+fn franc(amount: i64) -> Money {
+    Franc{amount}
+}
+
+
 #[cfg(test)]
 mod tests {
     use super::*;
     #[test]
     fn test_multiplication() {
-        let five = Dollar { amount: 5 };
-        assert_eq!(Dollar { amount: 10}, five.times(2));
-        assert_eq!(Dollar { amount: 15}, five.times(3));
+        let five = dollar(5);
+        assert_eq!(dollar(10), five.times(2));
+        assert_eq!(dollar(15), five.times(3));
     }
     #[test]
     fn test_equality() {
-        assert_eq!(Dollar { amount: 5}, Dollar { amount: 5});
-        assert_ne!(Dollar { amount: 5}, Dollar { amount: 6});
-        assert_eq!(Franc { amount: 5}, Franc { amount: 5});
-        assert_ne!(Franc { amount: 5}, Franc { amount: 6});
-        assert_ne!(Franc { amount: 5}, Dollar { amount: 5});
+        assert_eq!(dollar(5), dollar(5));
+        assert_ne!(dollar(5), dollar(6));
+        assert_eq!(franc(5), franc(5));
+        assert_ne!(franc(5), franc(6));
+        assert_ne!(franc(5), dollar(5));
     }
     #[test]
     fn test_franc_multiplication() {
-        let five = Franc { amount: 5 };
-        assert_eq!(Franc { amount: 10}, five.times(2));
-        assert_eq!(Franc { amount: 15}, five.times(3));
+        let five = franc(5);
+        assert_eq!(franc(10), five.times(2));
+        assert_eq!(franc(15), five.times(3));
     }
 }
