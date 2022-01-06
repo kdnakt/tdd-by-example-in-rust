@@ -1,42 +1,34 @@
-use crate::{
-    Money::*,
-};
-
 fn main() {
     println!("Hello, world!");
 }
 
 #[derive(Debug, PartialEq)]
-enum Money {
-    Dollar {
-        amount: i64,
-    },
-    Franc {
-        amount: i64,
-    },
+struct Money {
+    amount: i64,
+    currency: String,
 }
 
 impl Money {
     fn times(&self, multiplier: i64) -> Money {
-        match self {
-            Dollar{amount} => Dollar { amount: amount * multiplier },
-            Franc{amount} => Franc { amount: amount * multiplier },
-        }
-    }
-    fn currency(&self) -> &str {
-        match self {
-            Dollar{..} => "USD",
-            Franc{..} => "CHF",
+        Money {
+            amount: self.amount * multiplier,
+            currency: self.currency.to_string()
         }
     }
 }
 
 fn dollar(amount: i64) -> Money {
-    Dollar{amount}
+    Money {
+        amount,
+        currency: "USD".to_string(),
+    }
 }
 
 fn franc(amount: i64) -> Money {
-    Franc{amount}
+    Money {
+        amount,
+        currency: "CHF".to_string(),
+    }
 }
 
 
@@ -65,7 +57,7 @@ mod tests {
     }
     #[test]
     fn test_currency() {
-        assert_eq!("USD", dollar(1).currency());
-        assert_eq!("CHF", franc(1).currency());
+        assert_eq!("USD", dollar(1).currency);
+        assert_eq!("CHF", franc(1).currency);
     }
 }
