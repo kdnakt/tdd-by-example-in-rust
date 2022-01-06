@@ -23,6 +23,12 @@ impl Money {
             Franc{amount} => Franc { amount: amount * multiplier },
         }
     }
+    fn currency(&self) -> &str {
+        match self {
+            Dollar{..} => "USD",
+            Franc{..} => "CHF",
+        }
+    }
 }
 
 fn dollar(amount: i64) -> Money {
@@ -56,5 +62,10 @@ mod tests {
         let five = franc(5);
         assert_eq!(franc(10), five.times(2));
         assert_eq!(franc(15), five.times(3));
+    }
+    #[test]
+    fn test_currency() {
+        assert_eq!("USD", dollar(1).currency());
+        assert_eq!("CHF", franc(1).currency());
     }
 }
