@@ -15,6 +15,12 @@ impl Money {
             currency: self.currency.to_string()
         }
     }
+    fn plus(&self, addend: Money) -> Money {
+        Money {
+            amount: self.amount + addend.amount,
+            currency: self.currency.to_string()
+        }
+    }
 }
 
 fn dollar(amount: i64) -> Money {
@@ -59,5 +65,10 @@ mod tests {
     fn test_currency() {
         assert_eq!("USD", dollar(1).currency);
         assert_eq!("CHF", franc(1).currency);
+    }
+    #[test]
+    fn test_simple_addition() {
+        let sum = dollar(5).plus(dollar(5));
+        assert_eq!(dollar(10), sum);
     }
 }
