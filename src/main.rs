@@ -1,11 +1,26 @@
+// Std
+use std::{
+    any::Any,
+};
+
 fn main() {
     println!("Hello, world!");
+}
+
+trait Expression {
+    fn as_any(&self) -> &dyn Any;
 }
 
 #[derive(Debug, PartialEq)]
 struct Money {
     amount: i64,
     currency: String,
+}
+
+impl Expression for Money {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
 }
 
 impl Money {
@@ -15,11 +30,14 @@ impl Money {
             currency: self.currency.to_string()
         }
     }
-    fn plus(&self, addend: Money) -> Money {
-        Money {
-            amount: self.amount + addend.amount,
-            currency: self.currency.to_string()
-        }
+    fn plus(&self, addend: Money) -> Box<dyn Expression> {
+        Box::new(Sum {
+            augend: Box::new(Money{
+                amount: self.amount,
+                currency: self.currency.to_string(),
+            }),
+            addend: Box::new(addend),
+        })
     }
 }
 
@@ -37,6 +55,24 @@ fn franc(amount: i64) -> Money {
     }
 }
 
+struct Sum {
+    augend: Box<Money>,
+    addend: Box<Money>,
+}
+
+impl Expression for Sum {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+}
+
+struct Bank {}
+
+impl Bank {
+    fn reduce(&self, source: Box<dyn Expression>, to: String) -> Money {
+        dollar(10)
+    }
+}
 
 #[cfg(test)]
 mod tests {
@@ -68,7 +104,21 @@ mod tests {
     }
     #[test]
     fn test_simple_addition() {
-        let sum = dollar(5).plus(dollar(5));
-        assert_eq!(dollar(10), sum);
+        let five = dollar(5);
+        let sum = five.plus(dollar(5));
+        let bank = Bank{};
+        let reduced = bank.reduce(sum, "USD".to_string());
+        assert_eq!(dollar(10), reduced);
+    }
+    #[test]
+    fn test_plus_returns_sum() {
+        let five = dollar(5);
+        let result = five.plus(dollar(5));
+        let sum = result.as_any()
+                .downcast_ref::<Sum>()
+                .expect("Wasn't a Sum");
+        assert_eq!(&five, sum.augend.as_ref());
+        assert_eq!(&five, sum.addend.as_ref());
+
     }
 }
