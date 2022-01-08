@@ -119,6 +119,15 @@ mod tests {
                 .expect("Wasn't a Sum");
         assert_eq!(&five, sum.augend.as_ref());
         assert_eq!(&five, sum.addend.as_ref());
-
+    }
+    #[test]
+    fn test_reduce_sum() {
+        let sum = Box::new(Sum {
+            augend: Box::new(dollar(3)),
+            addend: Box::new(dollar(4)),
+        });
+        let bank = Bank{};
+        let result = bank.reduce(sum, "USD".to_string());
+        assert_eq!(dollar(7), result);
     }
 }
