@@ -70,7 +70,13 @@ struct Bank {}
 
 impl Bank {
     fn reduce(&self, source: Box<dyn Expression>, to: String) -> Money {
-        dollar(10)
+        let sum = source.as_any()
+            .downcast_ref::<Sum>()
+            .expect("Wasn't a Sum");
+        Money {
+            amount: sum.augend.amount + sum.addend.amount,
+            currency: to,
+        }
     }
 }
 
