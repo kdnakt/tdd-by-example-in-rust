@@ -9,6 +9,7 @@ fn main() {
 
 trait Expression {
     fn as_any(&self) -> &dyn Any;
+    fn reduce(&self, to: String) -> Money;
 }
 
 #[derive(Debug, PartialEq)]
@@ -20,6 +21,12 @@ struct Money {
 impl Expression for Money {
     fn as_any(&self) -> &dyn Any {
         self
+    }
+    fn reduce(&self, _to: String) -> Money {
+        Money {
+            amount: self.amount,
+            currency: self.currency.to_string(),
+        }
     }
 }
 
@@ -64,9 +71,6 @@ impl Expression for Sum {
     fn as_any(&self) -> &dyn Any {
         self
     }
-}
-
-impl Sum {
     fn reduce(&self, to: String) -> Money {
         Money {
             amount: self.augend.amount + self.addend.amount,
@@ -79,16 +83,7 @@ struct Bank {}
 
 impl Bank {
     fn reduce(&self, source: Box<dyn Expression>, to: String) -> Money {
-        let a = source.as_any();
-        if let Some(Money{amount, currency, ..}) = a.downcast_ref::<Money>() {
-            return Money {
-                amount: *amount,
-                currency: currency.to_string(),
-            };
-        }
-        let sum = a.downcast_ref::<Sum>()
-            .expect("Wasn't a Sum");
-        sum.reduce(to)
+        source.reduce(to)
     }
 }
 
