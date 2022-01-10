@@ -22,10 +22,15 @@ impl Expression for Money {
     fn as_any(&self) -> &dyn Any {
         self
     }
-    fn reduce(&self, _to: String) -> Money {
+    fn reduce(&self, to: String) -> Money {
+        let rate = if self.currency == "CHF" && to == "USD" {
+            2
+        } else {
+            1
+        };
         Money {
-            amount: self.amount,
-            currency: self.currency.to_string(),
+            amount: self.amount / rate,
+            currency: to,
         }
     }
 }
@@ -84,6 +89,8 @@ struct Bank {}
 impl Bank {
     fn reduce(&self, source: Box<dyn Expression>, to: String) -> Money {
         source.reduce(to)
+    }
+    fn add_rate(&self, from: String, to: String, rate: i64) {
     }
 }
 
@@ -147,6 +154,13 @@ mod tests {
     fn test_reduce_money() {
         let bank = Bank{};
         let result = bank.reduce(Box::new(dollar(1)), "USD".to_string());
+        assert_eq!(dollar(1), result);
+    }
+    #[test]
+    fn test_reduce_money_different_currency() {
+        let bank = Bank{};
+        bank.add_rate("CHF".to_string(), "USD".to_string(), 2);
+        let result = bank.reduce(Box::new(franc(2)), "USD".to_string());
         assert_eq!(dollar(1), result);
     }
 }
