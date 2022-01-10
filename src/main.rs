@@ -66,6 +66,15 @@ impl Expression for Sum {
     }
 }
 
+impl Sum {
+    fn reduce(&self, to: String) -> Money {
+        Money {
+            amount: self.augend.amount + self.addend.amount,
+            currency: to,
+        }
+    }
+}
+
 struct Bank {}
 
 impl Bank {
@@ -73,10 +82,7 @@ impl Bank {
         let sum = source.as_any()
             .downcast_ref::<Sum>()
             .expect("Wasn't a Sum");
-        Money {
-            amount: sum.augend.amount + sum.addend.amount,
-            currency: to,
-        }
+        sum.reduce(to)
     }
 }
 
