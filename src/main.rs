@@ -79,8 +79,14 @@ struct Bank {}
 
 impl Bank {
     fn reduce(&self, source: Box<dyn Expression>, to: String) -> Money {
-        let sum = source.as_any()
-            .downcast_ref::<Sum>()
+        let a = source.as_any();
+        if let Some(Money{amount, currency, ..}) = a.downcast_ref::<Money>() {
+            return Money {
+                amount: *amount,
+                currency: currency.to_string(),
+            };
+        }
+        let sum = a.downcast_ref::<Sum>()
             .expect("Wasn't a Sum");
         sum.reduce(to)
     }
@@ -141,5 +147,11 @@ mod tests {
         let bank = Bank{};
         let result = bank.reduce(sum, "USD".to_string());
         assert_eq!(dollar(7), result);
+    }
+    #[test]
+    fn test_reduce_money() {
+        let bank = Bank{};
+        let result = bank.reduce(Box::new(dollar(1)), "USD".to_string());
+        assert_eq!(dollar(1), result);
     }
 }
