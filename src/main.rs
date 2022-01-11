@@ -9,7 +9,7 @@ fn main() {
 
 trait Expression {
     fn as_any(&self) -> &dyn Any;
-    fn reduce(&self, to: String) -> Money;
+    fn reduce(&self, bank: &Bank, to: String) -> Money;
 }
 
 #[derive(Debug, PartialEq)]
@@ -22,12 +22,8 @@ impl Expression for Money {
     fn as_any(&self) -> &dyn Any {
         self
     }
-    fn reduce(&self, to: String) -> Money {
-        let rate = if self.currency == "CHF" && to == "USD" {
-            2
-        } else {
-            1
-        };
+    fn reduce(&self, bank: &Bank, to: String) -> Money {
+        let rate = bank.rate(self.currency.to_string(), to.to_string());
         Money {
             amount: self.amount / rate,
             currency: to,
@@ -76,7 +72,7 @@ impl Expression for Sum {
     fn as_any(&self) -> &dyn Any {
         self
     }
-    fn reduce(&self, to: String) -> Money {
+    fn reduce(&self, bank: &Bank, to: String) -> Money {
         Money {
             amount: self.augend.amount + self.addend.amount,
             currency: to,
@@ -88,9 +84,16 @@ struct Bank {}
 
 impl Bank {
     fn reduce(&self, source: Box<dyn Expression>, to: String) -> Money {
-        source.reduce(to)
+        source.reduce(self, to)
     }
     fn add_rate(&self, from: String, to: String, rate: i64) {
+    }
+    fn rate(&self, from: String, to: String) -> i64 {
+        if from == "CHF" && to == "USD" {
+            2
+        } else {
+            1
+        }
     }
 }
 
