@@ -75,7 +75,8 @@ impl Expression for Sum {
     }
     fn reduce(&self, bank: &Bank, to: String) -> Money {
         Money {
-            amount: self.augend.amount + self.addend.amount,
+            amount: self.augend.reduce(bank, to.to_string()).amount
+                    + self.addend.reduce(bank, to.to_string()).amount,
             currency: to,
         }
     }
