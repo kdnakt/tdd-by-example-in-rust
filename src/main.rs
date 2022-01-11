@@ -93,17 +93,19 @@ impl Bank {
     fn reduce(&self, source: Box<dyn Expression>, to: String) -> Money {
         source.reduce(self, to)
     }
-    fn add_rate(&self, from: String, to: String, rate: i64) {
+    fn add_rate(&mut self, from: String, to: String, rate: i64) {
+        self.rates.insert(Pair { from, to }, rate);
     }
     fn rate(&self, from: String, to: String) -> i64 {
-        if from == "CHF" && to == "USD" {
-            2
-        } else {
+        if from == to {
             1
+        } else {
+            self.rates.get(&Pair { from, to }).unwrap().clone()
         }
     }
 }
 
+#[derive(PartialEq, Eq, Hash)]
 struct Pair {
     from: String,
     to: String,
@@ -173,9 +175,14 @@ mod tests {
     }
     #[test]
     fn test_reduce_money_different_currency() {
-        let bank = Bank::new();
+        let mut bank = Bank::new();
         bank.add_rate("CHF".to_string(), "USD".to_string(), 2);
         let result = bank.reduce(Box::new(franc(2)), "USD".to_string());
         assert_eq!(dollar(1), result);
+    }
+    #[test]
+    fn test_identity_rate() {
+        let bank = Bank::new();
+        assert_eq!(1, bank.rate("USD".to_string(), "USD".to_string()));
     }
 }
