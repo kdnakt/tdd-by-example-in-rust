@@ -185,4 +185,13 @@ mod tests {
         let bank = Bank::new();
         assert_eq!(1, bank.rate("USD".to_string(), "USD".to_string()));
     }
+    #[test]
+    fn test_mixed_addition() {
+        let five_bucks = Box::new(dollar(5));
+        let ten_francs = franc(10);
+        let mut bank = Bank::new();
+        bank.add_rate("CHF".to_string(), "USD".to_string(), 2);
+        let result = bank.reduce(five_bucks.plus(ten_francs), "USD".to_string());
+        assert_eq!(dollar(10), result);
+    }
 }
