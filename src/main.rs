@@ -1,6 +1,7 @@
 // Std
 use std::{
     any::Any,
+    collections::HashMap,
 };
 
 fn main() {
@@ -80,9 +81,15 @@ impl Expression for Sum {
     }
 }
 
-struct Bank {}
+struct Bank {
+    rates: HashMap<Pair, i64>
+}
 
 impl Bank {
+    fn new() -> Bank {
+        let rates = HashMap::new();
+        Bank { rates }
+    }
     fn reduce(&self, source: Box<dyn Expression>, to: String) -> Money {
         source.reduce(self, to)
     }
@@ -95,6 +102,11 @@ impl Bank {
             1
         }
     }
+}
+
+struct Pair {
+    from: String,
+    to: String,
 }
 
 #[cfg(test)]
@@ -129,7 +141,7 @@ mod tests {
     fn test_simple_addition() {
         let five = dollar(5);
         let sum = five.plus(dollar(5));
-        let bank = Bank{};
+        let bank = Bank::new();
         let reduced = bank.reduce(sum, "USD".to_string());
         assert_eq!(dollar(10), reduced);
     }
@@ -149,19 +161,19 @@ mod tests {
             augend: Box::new(dollar(3)),
             addend: Box::new(dollar(4)),
         });
-        let bank = Bank{};
+        let bank = Bank::new();
         let result = bank.reduce(sum, "USD".to_string());
         assert_eq!(dollar(7), result);
     }
     #[test]
     fn test_reduce_money() {
-        let bank = Bank{};
+        let bank = Bank::new();
         let result = bank.reduce(Box::new(dollar(1)), "USD".to_string());
         assert_eq!(dollar(1), result);
     }
     #[test]
     fn test_reduce_money_different_currency() {
-        let bank = Bank{};
+        let bank = Bank::new();
         bank.add_rate("CHF".to_string(), "USD".to_string(), 2);
         let result = bank.reduce(Box::new(franc(2)), "USD".to_string());
         assert_eq!(dollar(1), result);
