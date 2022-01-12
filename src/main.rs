@@ -11,6 +11,7 @@ fn main() {
 trait Expression {
     fn as_any(&self) -> &dyn Any;
     fn reduce(&self, bank: &Bank, to: String) -> Money;
+    fn plus(&self, addend: Box<dyn Expression>) -> Box<dyn Expression>;
 }
 
 #[derive(Debug, PartialEq)]
@@ -30,6 +31,15 @@ impl Expression for Money {
             currency: to,
         }
     }
+    fn plus(&self, addend: Box<dyn Expression>) -> Box<dyn Expression> {
+        Box::new(Sum {
+            augend: Box::new(Money{
+                amount: self.amount,
+                currency: self.currency.to_string(),
+            }),
+            addend,
+        })
+    }
 }
 
 impl Money {
@@ -38,15 +48,6 @@ impl Money {
             amount: self.amount * multiplier,
             currency: self.currency.to_string()
         }
-    }
-    fn plus(&self, addend: Money) -> Box<dyn Expression> {
-        Box::new(Sum {
-            augend: Box::new(Money{
-                amount: self.amount,
-                currency: self.currency.to_string(),
-            }),
-            addend: Box::new(addend),
-        })
     }
 }
 
@@ -65,8 +66,8 @@ fn franc(amount: i64) -> Money {
 }
 
 struct Sum {
-    augend: Box<Money>,
-    addend: Box<Money>,
+    augend: Box<dyn Expression>,
+    addend: Box<dyn Expression>,
 }
 
 impl Expression for Sum {
@@ -79,6 +80,10 @@ impl Expression for Sum {
                     + self.addend.reduce(bank, to.to_string()).amount,
             currency: to,
         }
+    }
+    fn plus(&self, addened: Box<dyn Expression>) -> Box<dyn Expression> {
+        // TODO: fix
+        Box::new(dollar(1))
     }
 }
 
@@ -143,7 +148,7 @@ mod tests {
     #[test]
     fn test_simple_addition() {
         let five = dollar(5);
-        let sum = five.plus(dollar(5));
+        let sum = five.plus(Box::new(dollar(5)));
         let bank = Bank::new();
         let reduced = bank.reduce(sum, "USD".to_string());
         assert_eq!(dollar(10), reduced);
@@ -151,12 +156,18 @@ mod tests {
     #[test]
     fn test_plus_returns_sum() {
         let five = dollar(5);
-        let result = five.plus(dollar(5));
+        let result = five.plus(Box::new(dollar(5)));
         let sum = result.as_any()
                 .downcast_ref::<Sum>()
                 .expect("Wasn't a Sum");
-        assert_eq!(&five, sum.augend.as_ref());
-        assert_eq!(&five, sum.addend.as_ref());
+        let augend = sum.augend.as_any()
+                .downcast_ref::<Money>()
+                .expect("Wasn't a Money");
+        assert_eq!(&five, augend);
+        let addend = sum.addend.as_any()
+                .downcast_ref::<Money>()
+                .expect("Wasn't a Money");
+        assert_eq!(&five, addend);
     }
     #[test]
     fn test_reduce_sum() {
@@ -189,7 +200,7 @@ mod tests {
     #[test]
     fn test_mixed_addition() {
         let five_bucks = Box::new(dollar(5));
-        let ten_francs = franc(10);
+        let ten_francs = Box::new(franc(10));
         let mut bank = Bank::new();
         bank.add_rate("CHF".to_string(), "USD".to_string(), 2);
         let result = bank.reduce(five_bucks.plus(ten_francs), "USD".to_string());
