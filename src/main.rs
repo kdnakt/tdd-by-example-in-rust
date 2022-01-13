@@ -52,7 +52,7 @@ impl Money {
             currency: "CHF".to_string(),
         }
     }
-    fn times(&self, multiplier: i64) -> Money {
+    fn times(self, multiplier: i64) -> Money {
         Money {
             amount: self.amount * multiplier,
             currency: self.currency.to_string()
@@ -119,9 +119,9 @@ mod tests {
     use super::*;
     #[test]
     fn test_multiplication() {
-        let five = Money::dollar(5);
-        assert_eq!(Money::dollar(10), five.times(2));
-        assert_eq!(Money::dollar(15), five.times(3));
+        let five = || Money::dollar(5);
+        assert_eq!(Money::dollar(10), five().times(2));
+        assert_eq!(Money::dollar(15), five().times(3));
     }
     #[test]
     fn test_equality() {
@@ -133,9 +133,9 @@ mod tests {
     }
     #[test]
     fn test_franc_multiplication() {
-        let five = Money::franc(5);
-        assert_eq!(Money::franc(10), five.times(2));
-        assert_eq!(Money::franc(15), five.times(3));
+        let five = || Money::franc(5);
+        assert_eq!(Money::franc(10), five().times(2));
+        assert_eq!(Money::franc(15), five().times(3));
     }
     #[test]
     fn test_currency() {
