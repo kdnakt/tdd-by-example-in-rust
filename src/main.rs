@@ -11,7 +11,7 @@ fn main() {
 trait Expression {
     fn as_any(&self) -> &dyn Any;
     fn reduce(&self, bank: &Bank, to: String) -> Money;
-    fn plus(&self, addend: Box<dyn Expression>) -> Box<dyn Expression>;
+    fn plus(self, addend: Box<dyn Expression>) -> Box<dyn Expression>;
 }
 
 #[derive(Debug, PartialEq)]
@@ -31,12 +31,9 @@ impl Expression for Money {
             currency: to,
         }
     }
-    fn plus(&self, addend: Box<dyn Expression>) -> Box<dyn Expression> {
+    fn plus(self, addend: Box<dyn Expression>) -> Box<dyn Expression> {
         Box::new(Sum {
-            augend: Box::new(Money{
-                amount: self.amount,
-                currency: self.currency.to_string(),
-            }),
+            augend: Box::new(self),
             addend,
         })
     }
@@ -81,9 +78,11 @@ impl Expression for Sum {
             currency: to,
         }
     }
-    fn plus(&self, addened: Box<dyn Expression>) -> Box<dyn Expression> {
-        // TODO: fix
-        Box::new(dollar(1))
+    fn plus(self, addened: Box<dyn Expression>) -> Box<dyn Expression> {
+        Box::new(Sum {
+            augend: Box::new(self),
+            addend: addened,
+        })
     }
 }
 
@@ -163,6 +162,7 @@ mod tests {
         let augend = sum.augend.as_any()
                 .downcast_ref::<Money>()
                 .expect("Wasn't a Money");
+        let five = dollar(5);
         assert_eq!(&five, augend);
         let addend = sum.addend.as_any()
                 .downcast_ref::<Money>()
@@ -205,5 +205,18 @@ mod tests {
         bank.add_rate("CHF".to_string(), "USD".to_string(), 2);
         let result = bank.reduce(five_bucks.plus(ten_francs), "USD".to_string());
         assert_eq!(dollar(10), result);
+    }
+    #[test]
+    fn test_sum_plus_money() {
+        let five_bucks = Box::new(dollar(5));
+        let ten_francs = Box::new(franc(10));
+        let mut bank = Bank::new();
+        bank.add_rate("CHF".to_string(), "USD".to_string(), 2);
+        let sum = Sum {
+            augend: five_bucks,
+            addend: ten_francs,
+        }.plus(Box::new(dollar(5)));
+        let result = bank.reduce(sum, "USD".to_string());
+        assert_eq!(dollar(15), result);
     }
 }
