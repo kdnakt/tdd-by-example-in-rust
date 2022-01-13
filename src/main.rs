@@ -40,25 +40,23 @@ impl Expression for Money {
 }
 
 impl Money {
+    fn dollar(amount: i64) -> Money {
+        Money {
+            amount,
+            currency: "USD".to_string(),
+        }
+    }
+    fn franc(amount: i64) -> Money {
+        Money {
+            amount,
+            currency: "CHF".to_string(),
+        }
+    }
     fn times(&self, multiplier: i64) -> Money {
         Money {
             amount: self.amount * multiplier,
             currency: self.currency.to_string()
         }
-    }
-}
-
-fn dollar(amount: i64) -> Money {
-    Money {
-        amount,
-        currency: "USD".to_string(),
-    }
-}
-
-fn franc(amount: i64) -> Money {
-    Money {
-        amount,
-        currency: "CHF".to_string(),
     }
 }
 
@@ -121,48 +119,48 @@ mod tests {
     use super::*;
     #[test]
     fn test_multiplication() {
-        let five = dollar(5);
-        assert_eq!(dollar(10), five.times(2));
-        assert_eq!(dollar(15), five.times(3));
+        let five = Money::dollar(5);
+        assert_eq!(Money::dollar(10), five.times(2));
+        assert_eq!(Money::dollar(15), five.times(3));
     }
     #[test]
     fn test_equality() {
-        assert_eq!(dollar(5), dollar(5));
-        assert_ne!(dollar(5), dollar(6));
-        assert_eq!(franc(5), franc(5));
-        assert_ne!(franc(5), franc(6));
-        assert_ne!(franc(5), dollar(5));
+        assert_eq!(Money::dollar(5), Money::dollar(5));
+        assert_ne!(Money::dollar(5), Money::dollar(6));
+        assert_eq!(Money::franc(5), Money::franc(5));
+        assert_ne!(Money::franc(5), Money::franc(6));
+        assert_ne!(Money::franc(5), Money::dollar(5));
     }
     #[test]
     fn test_franc_multiplication() {
-        let five = franc(5);
-        assert_eq!(franc(10), five.times(2));
-        assert_eq!(franc(15), five.times(3));
+        let five = Money::franc(5);
+        assert_eq!(Money::franc(10), five.times(2));
+        assert_eq!(Money::franc(15), five.times(3));
     }
     #[test]
     fn test_currency() {
-        assert_eq!("USD", dollar(1).currency);
-        assert_eq!("CHF", franc(1).currency);
+        assert_eq!("USD", Money::dollar(1).currency);
+        assert_eq!("CHF", Money::franc(1).currency);
     }
     #[test]
     fn test_simple_addition() {
-        let five = dollar(5);
-        let sum = five.plus(Box::new(dollar(5)));
+        let five = Money::dollar(5);
+        let sum = five.plus(Box::new(Money::dollar(5)));
         let bank = Bank::new();
         let reduced = bank.reduce(sum, "USD".to_string());
-        assert_eq!(dollar(10), reduced);
+        assert_eq!(Money::dollar(10), reduced);
     }
     #[test]
     fn test_plus_returns_sum() {
-        let five = dollar(5);
-        let result = five.plus(Box::new(dollar(5)));
+        let five = Money::dollar(5);
+        let result = five.plus(Box::new(Money::dollar(5)));
         let sum = result.as_any()
                 .downcast_ref::<Sum>()
                 .expect("Wasn't a Sum");
         let augend = sum.augend.as_any()
                 .downcast_ref::<Money>()
                 .expect("Wasn't a Money");
-        let five = dollar(5);
+        let five = Money::dollar(5);
         assert_eq!(&five, augend);
         let addend = sum.addend.as_any()
                 .downcast_ref::<Money>()
@@ -172,25 +170,25 @@ mod tests {
     #[test]
     fn test_reduce_sum() {
         let sum = Box::new(Sum {
-            augend: Box::new(dollar(3)),
-            addend: Box::new(dollar(4)),
+            augend: Box::new(Money::dollar(3)),
+            addend: Box::new(Money::dollar(4)),
         });
         let bank = Bank::new();
         let result = bank.reduce(sum, "USD".to_string());
-        assert_eq!(dollar(7), result);
+        assert_eq!(Money::dollar(7), result);
     }
     #[test]
     fn test_reduce_money() {
         let bank = Bank::new();
-        let result = bank.reduce(Box::new(dollar(1)), "USD".to_string());
-        assert_eq!(dollar(1), result);
+        let result = bank.reduce(Box::new(Money::dollar(1)), "USD".to_string());
+        assert_eq!(Money::dollar(1), result);
     }
     #[test]
     fn test_reduce_money_different_currency() {
         let mut bank = Bank::new();
         bank.add_rate("CHF".to_string(), "USD".to_string(), 2);
-        let result = bank.reduce(Box::new(franc(2)), "USD".to_string());
-        assert_eq!(dollar(1), result);
+        let result = bank.reduce(Box::new(Money::franc(2)), "USD".to_string());
+        assert_eq!(Money::dollar(1), result);
     }
     #[test]
     fn test_identity_rate() {
@@ -199,24 +197,24 @@ mod tests {
     }
     #[test]
     fn test_mixed_addition() {
-        let five_bucks = Box::new(dollar(5));
-        let ten_francs = Box::new(franc(10));
+        let five_bucks = Box::new(Money::dollar(5));
+        let ten_francs = Box::new(Money::franc(10));
         let mut bank = Bank::new();
         bank.add_rate("CHF".to_string(), "USD".to_string(), 2);
         let result = bank.reduce(five_bucks.plus(ten_francs), "USD".to_string());
-        assert_eq!(dollar(10), result);
+        assert_eq!(Money::dollar(10), result);
     }
     #[test]
     fn test_sum_plus_money() {
-        let five_bucks = Box::new(dollar(5));
-        let ten_francs = Box::new(franc(10));
+        let five_bucks = Box::new(Money::dollar(5));
+        let ten_francs = Box::new(Money::franc(10));
         let mut bank = Bank::new();
         bank.add_rate("CHF".to_string(), "USD".to_string(), 2);
         let sum = Sum {
             augend: five_bucks,
             addend: ten_francs,
-        }.plus(Box::new(dollar(5)));
+        }.plus(Box::new(Money::dollar(5)));
         let result = bank.reduce(sum, "USD".to_string());
-        assert_eq!(dollar(15), result);
+        assert_eq!(Money::dollar(15), result);
     }
 }
