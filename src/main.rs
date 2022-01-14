@@ -95,6 +95,12 @@ impl Expression for Sum {
     }
 }
 
+impl Sum {
+    fn new(augend: Box<dyn Expression>, addend: Box<dyn Expression>) -> Sum {
+        Sum { augend, addend }
+    }
+}
+
 struct Bank {
     rates: HashMap<Pair, i64>
 }
@@ -221,10 +227,8 @@ mod tests {
         let ten_francs = Box::new(Money::franc(10));
         let mut bank = Bank::new();
         bank.add_rate(CHF, USD, 2);
-        let sum = Sum {
-            augend: five_bucks,
-            addend: ten_francs,
-        }.plus(Box::new(Money::dollar(5)));
+        let sum = Sum::new(five_bucks, ten_francs)
+                .plus(Box::new(Money::dollar(5)));
         let result = bank.reduce(sum, USD);
         assert_eq!(Money::dollar(15), result);
     }
