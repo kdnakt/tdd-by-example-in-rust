@@ -23,6 +23,7 @@ trait Expression {
     fn as_any(&self) -> &dyn Any;
     fn reduce(&self, bank: &Bank, to: Currency) -> Money;
     fn plus(self, addend: Box<dyn Expression>) -> Box<dyn Expression>;
+    fn times(&self, muultiplier: i64) -> Box<dyn Expression>;
 }
 
 #[derive(Debug, PartialEq)]
@@ -48,6 +49,12 @@ impl Expression for Money {
             addend,
         })
     }
+    fn times(&self, multiplier: i64) -> Box<dyn Expression> {
+        Box::new(Money {
+            amount: self.amount * multiplier,
+            currency: self.currency,
+        })
+    }
 }
 
 impl Money {
@@ -61,12 +68,6 @@ impl Money {
         Money {
             amount,
             currency: CHF,
-        }
-    }
-    fn times(self, multiplier: i64) -> Money {
-        Money {
-            amount: self.amount * multiplier,
-            currency: self.currency,
         }
     }
 }
@@ -91,6 +92,12 @@ impl Expression for Sum {
         Box::new(Sum {
             augend: Box::new(self),
             addend: addened,
+        })
+    }
+    fn times(&self, multiplier: i64) -> Box<dyn Expression> {
+        Box::new(Sum {
+            augend: self.augend.times(multiplier),
+            addend: self.addend.times(multiplier),
         })
     }
 }
@@ -137,8 +144,16 @@ mod tests {
     #[test]
     fn test_multiplication() {
         let five = || Money::dollar(5);
-        assert_eq!(Money::dollar(10), five().times(2));
-        assert_eq!(Money::dollar(15), five().times(3));
+        let ten = five().times(2);
+        let ten = ten.as_any()
+                .downcast_ref::<Money>()
+                .expect("Wasn't a Money");
+        assert_eq!(&Money::dollar(10), ten);
+        let fifteen = five().times(3);
+        let fifteen = fifteen.as_any()
+                .downcast_ref::<Money>()
+                .expect("Wasn't a Money");
+        assert_eq!(&Money::dollar(15), fifteen);
     }
     #[test]
     fn test_equality() {
@@ -151,8 +166,16 @@ mod tests {
     #[test]
     fn test_franc_multiplication() {
         let five = || Money::franc(5);
-        assert_eq!(Money::franc(10), five().times(2));
-        assert_eq!(Money::franc(15), five().times(3));
+        let ten = five().times(2);
+        let ten = ten.as_any()
+                .downcast_ref::<Money>()
+                .expect("Wasn't a Money");
+        assert_eq!(&Money::franc(10), ten);
+        let fifteen = five().times(3);
+        let fifteen = fifteen.as_any()
+                .downcast_ref::<Money>()
+                .expect("Wasn't a Money");
+        assert_eq!(&Money::franc(15), fifteen);
     }
     #[test]
     fn test_currency() {
@@ -231,5 +254,16 @@ mod tests {
                 .plus(Box::new(Money::dollar(5)));
         let result = bank.reduce(sum, USD);
         assert_eq!(Money::dollar(15), result);
+    }
+    #[test]
+    fn test_sum_times() {
+        let five_bucks = Box::new(Money::dollar(5));
+        let ten_francs = Box::new(Money::franc(10));
+        let mut bank = Bank::new();
+        bank.add_rate(CHF, USD, 2);
+        let sum = Sum::new(five_bucks, ten_francs)
+                .times(2);
+        let result = bank.reduce(sum, USD);
+        assert_eq!(Money::dollar(20), result);
     }
 }
