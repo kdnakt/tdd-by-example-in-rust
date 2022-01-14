@@ -4,28 +4,39 @@ use std::{
     collections::HashMap,
 };
 
+// Internal
+use crate::{
+    Currency::*,
+};
+
 fn main() {
     println!("Hello, world!");
 }
 
+#[derive(Debug, PartialEq, Hash, Eq, Clone, Copy)]
+enum Currency {
+    USD,
+    CHF,
+}
+
 trait Expression {
     fn as_any(&self) -> &dyn Any;
-    fn reduce(&self, bank: &Bank, to: String) -> Money;
+    fn reduce(&self, bank: &Bank, to: Currency) -> Money;
     fn plus(self, addend: Box<dyn Expression>) -> Box<dyn Expression>;
 }
 
 #[derive(Debug, PartialEq)]
 struct Money {
     amount: i64,
-    currency: String,
+    currency: Currency,
 }
 
 impl Expression for Money {
     fn as_any(&self) -> &dyn Any {
         self
     }
-    fn reduce(&self, bank: &Bank, to: String) -> Money {
-        let rate = bank.rate(self.currency.to_string(), to.to_string());
+    fn reduce(&self, bank: &Bank, to: Currency) -> Money {
+        let rate = bank.rate(self.currency, to);
         Money {
             amount: self.amount / rate,
             currency: to,
@@ -43,19 +54,19 @@ impl Money {
     fn dollar(amount: i64) -> Money {
         Money {
             amount,
-            currency: "USD".to_string(),
+            currency: USD,
         }
     }
     fn franc(amount: i64) -> Money {
         Money {
             amount,
-            currency: "CHF".to_string(),
+            currency: CHF,
         }
     }
     fn times(self, multiplier: i64) -> Money {
         Money {
             amount: self.amount * multiplier,
-            currency: self.currency.to_string()
+            currency: self.currency,
         }
     }
 }
@@ -69,10 +80,10 @@ impl Expression for Sum {
     fn as_any(&self) -> &dyn Any {
         self
     }
-    fn reduce(&self, bank: &Bank, to: String) -> Money {
+    fn reduce(&self, bank: &Bank, to: Currency) -> Money {
         Money {
-            amount: self.augend.reduce(bank, to.to_string()).amount
-                    + self.addend.reduce(bank, to.to_string()).amount,
+            amount: self.augend.reduce(bank, to).amount
+                    + self.addend.reduce(bank, to).amount,
             currency: to,
         }
     }
@@ -93,13 +104,13 @@ impl Bank {
         let rates = HashMap::new();
         Bank { rates }
     }
-    fn reduce(&self, source: Box<dyn Expression>, to: String) -> Money {
+    fn reduce(&self, source: Box<dyn Expression>, to: Currency) -> Money {
         source.reduce(self, to)
     }
-    fn add_rate(&mut self, from: String, to: String, rate: i64) {
+    fn add_rate(&mut self, from: Currency, to: Currency, rate: i64) {
         self.rates.insert(Pair { from, to }, rate);
     }
-    fn rate(&self, from: String, to: String) -> i64 {
+    fn rate(&self, from: Currency, to: Currency) -> i64 {
         if from == to {
             1
         } else {
@@ -110,8 +121,8 @@ impl Bank {
 
 #[derive(PartialEq, Eq, Hash)]
 struct Pair {
-    from: String,
-    to: String,
+    from: Currency,
+    to: Currency,
 }
 
 #[cfg(test)]
@@ -139,15 +150,15 @@ mod tests {
     }
     #[test]
     fn test_currency() {
-        assert_eq!("USD", Money::dollar(1).currency);
-        assert_eq!("CHF", Money::franc(1).currency);
+        assert_eq!(USD, Money::dollar(1).currency);
+        assert_eq!(CHF, Money::franc(1).currency);
     }
     #[test]
     fn test_simple_addition() {
         let five = Money::dollar(5);
         let sum = five.plus(Box::new(Money::dollar(5)));
         let bank = Bank::new();
-        let reduced = bank.reduce(sum, "USD".to_string());
+        let reduced = bank.reduce(sum, USD);
         assert_eq!(Money::dollar(10), reduced);
     }
     #[test]
@@ -174,34 +185,34 @@ mod tests {
             addend: Box::new(Money::dollar(4)),
         });
         let bank = Bank::new();
-        let result = bank.reduce(sum, "USD".to_string());
+        let result = bank.reduce(sum, USD);
         assert_eq!(Money::dollar(7), result);
     }
     #[test]
     fn test_reduce_money() {
         let bank = Bank::new();
-        let result = bank.reduce(Box::new(Money::dollar(1)), "USD".to_string());
+        let result = bank.reduce(Box::new(Money::dollar(1)), USD);
         assert_eq!(Money::dollar(1), result);
     }
     #[test]
     fn test_reduce_money_different_currency() {
         let mut bank = Bank::new();
-        bank.add_rate("CHF".to_string(), "USD".to_string(), 2);
-        let result = bank.reduce(Box::new(Money::franc(2)), "USD".to_string());
+        bank.add_rate(CHF, USD, 2);
+        let result = bank.reduce(Box::new(Money::franc(2)), USD);
         assert_eq!(Money::dollar(1), result);
     }
     #[test]
     fn test_identity_rate() {
         let bank = Bank::new();
-        assert_eq!(1, bank.rate("USD".to_string(), "USD".to_string()));
+        assert_eq!(1, bank.rate(USD, USD));
     }
     #[test]
     fn test_mixed_addition() {
         let five_bucks = Box::new(Money::dollar(5));
         let ten_francs = Box::new(Money::franc(10));
         let mut bank = Bank::new();
-        bank.add_rate("CHF".to_string(), "USD".to_string(), 2);
-        let result = bank.reduce(five_bucks.plus(ten_francs), "USD".to_string());
+        bank.add_rate(CHF, USD, 2);
+        let result = bank.reduce(five_bucks.plus(ten_francs), USD);
         assert_eq!(Money::dollar(10), result);
     }
     #[test]
@@ -209,12 +220,12 @@ mod tests {
         let five_bucks = Box::new(Money::dollar(5));
         let ten_francs = Box::new(Money::franc(10));
         let mut bank = Bank::new();
-        bank.add_rate("CHF".to_string(), "USD".to_string(), 2);
+        bank.add_rate(CHF, USD, 2);
         let sum = Sum {
             augend: five_bucks,
             addend: ten_francs,
         }.plus(Box::new(Money::dollar(5)));
-        let result = bank.reduce(sum, "USD".to_string());
+        let result = bank.reduce(sum, USD);
         assert_eq!(Money::dollar(15), result);
     }
 }
